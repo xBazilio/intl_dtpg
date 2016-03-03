@@ -1,13 +1,3 @@
-/**
- *  functionreturnvalue.cpp
- *  @author Jasper van Eck<jasper.vaneck@copernica.com>
- * 
- *  An example file to show the working of a function call with a return value.
- */
-
-/**
- *  Libraries used.
- */
 #include <phpcpp.h>
 #include "unicode/dtptngen.h"
 
