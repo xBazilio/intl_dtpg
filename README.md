@@ -8,9 +8,12 @@ The motivation is described in https://blog.ksimka.io/a-long-journey-to-formatti
 
 ## Installation
 
-```
-make && make clean && sudo make install
-````
++ Install PHPCPP — http://www.php-cpp.com/documentation/install .
++ Install ICU
+  `sudo apt-get install libicu-dev`
++ Build and install extension 
+  `make && make clean && sudo make install`
++ Try it using example
 
 ## Examples
 
