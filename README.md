@@ -10,7 +10,7 @@ Long story short: currently (with standard `intl`) there is no way to format a d
 
 ## Installation
 
-+ [Install PHPCPP](http://www.php-cpp.com/documentation/install).
++ [Install PHPCPP](http://www.php-cpp.com/documentation/install)
 + Install ICU
   `sudo apt-get install libicu-dev`
 + Build and install extension 
