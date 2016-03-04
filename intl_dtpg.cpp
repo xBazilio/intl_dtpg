@@ -7,42 +7,23 @@ using icu::DateTimePatternGenerator;
 
 using namespace std;
 
-string _intl_dtpg_find_best_pattern(Locale locale, UnicodeString skeleton) {
-    UErrorCode status = U_ZERO_ERROR;
-    
-    DateTimePatternGenerator *dtpg = DateTimePatternGenerator::createInstance(locale, status);
-    // use getBestPattern method to get the best pattern for the given skeleton
-    UnicodeString pattern = dtpg->getBestPattern(skeleton, status);
-    delete dtpg;
-
-    string s;
-    pattern.toUTF8String(s);
-
-    return s;
-}
-
-/**
- *  intl_dtpg_find_best_pattern()
- *  @return Php::Value
- */
-Php::Value intl_dtpg_find_best_pattern(Php::Parameters &params)
-{
-    const char* input_skeleton = params[1];
-
-    return _intl_dtpg_find_best_pattern(Locale(params[0]), input_skeleton);
-}
-
 class IntlDateTimePatternGenerator : public Php::Base
 {
 private:
-    /**
-     *  @var Locale
-     */
-    Locale locale;
-
+    DateTimePatternGenerator *dtpg;
+    UErrorCode status = U_ZERO_ERROR;
 public:
     IntlDateTimePatternGenerator() {}
-    virtual ~IntlDateTimePatternGenerator() {}
+    virtual ~IntlDateTimePatternGenerator() {
+        if (dtpg != NULL) { delete dtpg; } 
+    }
+
+    /**
+     * @internal for usage in function
+     */
+    void initIcuDtpg(const char* locale) {
+        dtpg = DateTimePatternGenerator::createInstance(Locale(locale), status);
+    }
 
     /**
      * php "constructor"
@@ -50,21 +31,47 @@ public:
      */
     void __construct(Php::Parameters &params)
     {
-        if (params.size() > 0) {
-            locale = Locale(params[0]);
-        }
+        initIcuDtpg(params[0]);
+    }
+
+    /**
+     * @internal for usage in function
+     */
+    string findBestPattern(const char* skeleton) {
+        UnicodeString pattern = dtpg->getBestPattern(skeleton, status);
+        string s; 
+        pattern.toUTF8String(s);
+        return s;
     }
 
     /**
      *  Finds best pattern for given skeleton.
      *  @return string
      */
-    Php::Value findBestPattern(Php::Parameters &params) { 
-        const char* input_skeleton = params[0];
-
-        return _intl_dtpg_find_best_pattern(locale, input_skeleton); 
+    Php::Value phpFindBestPattern(Php::Parameters &params) { 
+        //const char* skeleton = params[0];
+        return findBestPattern(params[0]);
     }
 };
+
+/**
+ *  intl_dtpg_find_best_pattern()
+ *  @return Php::Value
+ */
+Php::Value intl_dtpg_find_best_pattern(Php::Parameters &params)
+{
+    // const char* input_skeleton = params[1];
+
+    //vector<string> constr_params (1, params[0]);
+//    vector<const char*> call_params (1, params[1]);
+
+    IntlDateTimePatternGenerator* dtpg = new IntlDateTimePatternGenerator();
+    dtpg->initIcuDtpg(params[0]);
+    string pattern = dtpg->findBestPattern(params[1]);
+    delete dtpg;
+
+    return pattern;
+}
 
 // Symbols are exported according to the "C" language
 extern "C" 
@@ -85,7 +92,7 @@ extern "C"
         intl_dtpg_class.method("__construct", &IntlDateTimePatternGenerator::__construct, {
             Php::ByVal("locale", Php::Type::String)
         });
-        intl_dtpg_class.method("findBestPattern", &IntlDateTimePatternGenerator::findBestPattern, { 
+        intl_dtpg_class.method("findBestPattern", &IntlDateTimePatternGenerator::phpFindBestPattern, { 
             Php::ByVal("skeleton", Php::Type::String) 
         });        
 
