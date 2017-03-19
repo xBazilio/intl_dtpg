@@ -1,6 +1,6 @@
 # IntlDateTimePatternGenerator
 
-This PHP extension introduces `IntlDateTimePatternGenerator` class — the missing part from PHP's `intl` extension. There is also a function `intl_dtpg_find_best_pattern` with same functionality.
+This PHP extension introduces `IntlDateTimePatternGenerator` class — the missing part from PHP's `intl` extension.
 
 ## Motivation
 
@@ -10,11 +10,10 @@ Long story short: currently (with standard `intl`) there is no way to format a d
 
 ## Installation
 
-+ [Install PHPCPP](http://www.php-cpp.com/documentation/install)
-+ Install ICU
-  `sudo apt-get install libicu-dev`
-+ Build and install extension 
-  `make && make clean && sudo make install`
++ Install ICU libraries
++ Build and install extension
+  `phpize && ./configure && make && sudo make install`
++ Make sure you have extension=phpcv.so in your php.ini
 + Try it using example
   `php example.php`
 
@@ -65,12 +64,3 @@ fa_IR
   eeeeMMMMdH  EEEE d LLLL،‏ H  چهارشنبه ۱۰ فوریه،‏ ۱۷
 */
 ```
-
-## Warning!
-
-I'm neither C++ nor C developer. This extension was developed nearly randomly. So yes, it's as is so far. May be you'll not be able to build it. Any improvements are highly appreciated.
-
-## TODO
-
-+ PHP 7. AFAIK there is no PHP 7 support in PHPCPP currently.
-+ port other useful methods from DTPG
