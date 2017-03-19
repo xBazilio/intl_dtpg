@@ -13,7 +13,7 @@ Long story short: currently (with standard `intl`) there is no way to format a d
 + Install ICU libraries
 + Build and install extension
   `phpize && ./configure && make && sudo make install`
-+ Make sure you have extension=phpcv.so in your php.ini
++ Make sure you have extension=intl_dtpg.so in your php.ini
 + Try it using example
   `php example.php`
 
