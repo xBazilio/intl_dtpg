@@ -1,0 +1,6 @@
+language: cpp
+script:
+    - phpize
+    - ./configure
+    - make
+    - make tests
