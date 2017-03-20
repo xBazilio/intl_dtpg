@@ -1,103 +1,187 @@
-#include <phpcpp.h>
-#include "unicode/dtptngen.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-using icu::UnicodeString;
-using icu::Locale;
-using icu::DateTimePatternGenerator;
+#include "intl_dtpg.h"
+#include <unicode/ustdio.h>
+#include <unicode/smpdtfmt.h>
 
-using namespace std;
+zend_class_entry *IntlDateTimePatternGenerator_ce;
+zend_object_handlers IntlDateTimePatternGenerator_object_handlers;
 
-class IntlDateTimePatternGenerator : public Php::Base
+/* {{{ IntlDateTimePatternGenerator_objects_dtor */
+static void IntlDateTimePatternGenerator_object_dtor(zend_object *object)
 {
-private:
-    DateTimePatternGenerator *dtpg;
-    UErrorCode status = U_ZERO_ERROR;
-public:
-    IntlDateTimePatternGenerator() {}
-    virtual ~IntlDateTimePatternGenerator() {
-        if (dtpg != NULL) { delete dtpg; } 
+    zend_objects_destroy_object(object);
+}
+/* }}} */
+
+/* {{{ IntlDateTimePatternGenerator_objects_free */
+void IntlDateTimePatternGenerator_object_free(zend_object *object)
+{
+    IntlDateTimePatternGenerator_object *dtpgo = php_intl_datetimepatterngenerator_fetch_object(object);
+
+    zend_object_std_dtor(&dtpgo->zo);
+
+    dtpgo->status = U_ZERO_ERROR;
+    if (dtpgo->dtpg) {
+        delete dtpgo->dtpg;
+        dtpgo->dtpg = nullptr;
+    }
+}
+/* }}} */
+
+/* {{{ IntlDateTimePatternGenerator_object_create */
+zend_object *IntlDateTimePatternGenerator_object_create(zend_class_entry *ce)
+{
+    IntlDateTimePatternGenerator_object* intern;
+
+    intern = (IntlDateTimePatternGenerator_object*)ecalloc(1,
+                        sizeof(IntlDateTimePatternGenerator_object) + zend_object_properties_size(ce));
+
+    zend_object_std_init(&intern->zo, ce);
+    object_properties_init(&intern->zo, ce);
+    intern->dtpg = nullptr;
+    intern->status = U_ZERO_ERROR;
+
+    intern->zo.handlers = &IntlDateTimePatternGenerator_object_handlers;
+
+    return &intern->zo;
+}
+/* }}} */
+
+/* {{{ proto void IntlDateTimePatternGenerator::__construct(string $locale)
+ * IntlDateTimePatternGenerator object constructor.
+ */
+PHP_METHOD(IntlDateTimePatternGenerator, __construct)
+{
+    zend_string *locale;
+    zval *object;
+    IntlDateTimePatternGenerator_object* dtpg = nullptr;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &locale) == FAILURE) {
+        return;
     }
 
-    /**
-     * @internal for usage in function
-     */
-    void initIcuDtpg(const char* locale) {
-        dtpg = DateTimePatternGenerator::createInstance(Locale(locale), status);
+    object = getThis();
+    dtpg = php_intl_datetimepatterngenerator_fetch_object(Z_OBJ_P(object));
+
+    dtpg->status = U_ZERO_ERROR;
+    dtpg->dtpg = DateTimePatternGenerator::createInstance(Locale(ZSTR_VAL(locale)), dtpg->status);
+}
+/* }}} */
+
+/* {{{ proto string IntlDateTimePatternGenerator::findBestPattern(string $skeleton)
+ * Return the best pattern matching the input skeleton.
+ */
+PHP_METHOD(IntlDateTimePatternGenerator, findBestPattern)
+{
+    zend_string *skeleton;
+    zval *object;
+    IntlDateTimePatternGenerator_object* dtpg = nullptr;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &skeleton) == FAILURE) {
+        return;
     }
 
-    /**
-     * php "constructor"
-     * @param  params
-     */
-    void __construct(Php::Parameters &params)
-    {
-        initIcuDtpg(params[0]);
-    }
+    object = getThis();
+    dtpg = php_intl_datetimepatterngenerator_fetch_object(Z_OBJ_P(object));
 
-    /**
-     * @internal for usage in function
-     */
-    string findBestPattern(const char* skeleton) {
-        UnicodeString pattern = dtpg->getBestPattern(skeleton, status);
-        string s; 
-        pattern.toUTF8String(s);
-        return s;
-    }
+    UnicodeString pattern = dtpg->dtpg->getBestPattern(UnicodeString(ZSTR_VAL(skeleton)), dtpg->status);
 
-    /**
-     *  Finds best pattern for given skeleton.
-     *  @return string
-     */
-    Php::Value phpFindBestPattern(Php::Parameters &params) { 
-        //const char* skeleton = params[0];
-        return findBestPattern(params[0]);
-    }
+    std::string s;
+    pattern.toUTF8String(s);
+    RETURN_STRING(s.c_str());
+}
+/* }}} */
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_findBestPattern, 0, 0, 1)
+    ZEND_ARG_INFO(0, skeleton)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo___construct, 0, 0, 1)
+    ZEND_ARG_INFO(0, locale)
+ZEND_END_ARG_INFO()
+
+const zend_function_entry IntlDateTimePatternGenerator_functions[] = {
+    PHP_ME(IntlDateTimePatternGenerator, __construct, arginfo___construct, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
+    PHP_ME(IntlDateTimePatternGenerator, findBestPattern, arginfo_findBestPattern, ZEND_ACC_PUBLIC)
+    PHP_FE_END
 };
 
-/**
- *  intl_dtpg_find_best_pattern()
- *  @return Php::Value
+/* {{{ PHP_MINIT_FUNCTION
  */
-Php::Value intl_dtpg_find_best_pattern(Php::Parameters &params)
+PHP_MINIT_FUNCTION(intl_dtpg)
 {
-    // const char* input_skeleton = params[1];
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "IntlDateTimePatternGenerator", IntlDateTimePatternGenerator_functions);
+    ce.create_object = IntlDateTimePatternGenerator_object_create;
+    IntlDateTimePatternGenerator_ce = zend_register_internal_class(&ce);
 
-    //vector<string> constr_params (1, params[0]);
-//    vector<const char*> call_params (1, params[1]);
+    memcpy(&IntlDateTimePatternGenerator_object_handlers, zend_get_std_object_handlers(),
+        sizeof IntlDateTimePatternGenerator_object_handlers);
+    IntlDateTimePatternGenerator_object_handlers.offset =
+                    XtOffsetOf(IntlDateTimePatternGenerator_object, zo);
+    IntlDateTimePatternGenerator_object_handlers.clone_obj = NULL; //no clone support
+    IntlDateTimePatternGenerator_object_handlers.dtor_obj = IntlDateTimePatternGenerator_object_dtor;
+    IntlDateTimePatternGenerator_object_handlers.free_obj = IntlDateTimePatternGenerator_object_free;
 
-    IntlDateTimePatternGenerator* dtpg = new IntlDateTimePatternGenerator();
-    dtpg->initIcuDtpg(params[0]);
-    string pattern = dtpg->findBestPattern(params[1]);
-    delete dtpg;
-
-    return pattern;
-}
-
-// Symbols are exported according to the "C" language
-extern "C" 
-{
-    // export the "get_module" function that will be called by the Zend engine
-    PHPCPP_EXPORT void *get_module()
-    {
-        // create extension
-        static Php::Extension extension("intl_dtpg","0.1.0");
-        
-        // add function to extension
-        extension.add("intl_dtpg_find_best_pattern", intl_dtpg_find_best_pattern, {
-            Php::ByVal("locale", Php::Type::String),
-            Php::ByVal("skeleton", Php::Type::String)
-        });
-
-        Php::Class<IntlDateTimePatternGenerator> intl_dtpg_class("IntlDateTimePatternGenerator");
-        intl_dtpg_class.method("__construct", &IntlDateTimePatternGenerator::__construct, {
-            Php::ByVal("locale", Php::Type::String)
-        });
-        intl_dtpg_class.method("findBestPattern", &IntlDateTimePatternGenerator::phpFindBestPattern, { 
-            Php::ByVal("skeleton", Php::Type::String) 
-        });        
-
-        extension.add(std::move(intl_dtpg_class));
-        // return the extension module
-        return extension.module();
+    if(!IntlDateTimePatternGenerator_ce) {
+        zend_error(E_ERROR, "Failed to register IntlDateTimePatternGenerator class");
+        return FAILURE;
     }
+
+    return SUCCESS;
 }
+/* }}} */
+
+/* {{{ PHP_MSHUTDOWN_FUNCTION
+ */
+PHP_MSHUTDOWN_FUNCTION(intl_dtpg)
+{
+    return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_MINFO_FUNCTION
+ */
+PHP_MINFO_FUNCTION(intl_dtpg)
+{
+    php_info_print_table_start();
+    php_info_print_table_header(2, "intl_dtpg support", "enabled");
+    php_info_print_table_header(2, "intl_dtpg version", INTL_DTPG_VERSION);
+    php_info_print_table_end();
+}
+/* }}} */
+
+/* {{{ intl_dtpg_functions[]
+ */
+const zend_function_entry intl_dtpg_functions[] = {
+    PHP_FE_END
+};
+/* }}} */
+
+/* {{{ intl_dtpg_module_entry
+ */
+zend_module_entry intl_dtpg_module_entry = {
+    STANDARD_MODULE_HEADER,
+    "intl_dtpg",
+    intl_dtpg_functions,
+    PHP_MINIT(intl_dtpg),
+    PHP_MSHUTDOWN(intl_dtpg),
+    NULL,
+    NULL,
+    PHP_MINFO(intl_dtpg),
+    INTL_DTPG_VERSION,
+    STANDARD_MODULE_PROPERTIES
+};
+/* }}} */
+
+
+
+#ifdef COMPILE_DL_INTL_DTPG
+#ifdef ZTS
+ZEND_TSRMLS_CACHE_DEFINE()
+#endif
+ZEND_GET_MODULE(intl_dtpg)
+#endif
