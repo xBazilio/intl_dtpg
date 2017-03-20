@@ -4,6 +4,8 @@
 
 This PHP extension introduces `IntlDateTimePatternGenerator` class — the missing part from PHP's `intl` extension.
 
+All kudos for the native PHP7 version send to [xBazilio](https://github.com/xBazilio).
+
 ## Motivation
 
 The motivation is described in https://blog.ksimka.io/a-long-journey-to-formatting-a-date-without-a-year-internationally-with-php/#header .
