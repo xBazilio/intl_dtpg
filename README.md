@@ -11,9 +11,12 @@ Long story short: currently (with standard `intl`) there is no way to format a d
 ## Installation
 
 + Install ICU libraries
+  + i.e. `sudo apt-get install libicu-dev` for Debian-like systems
 + Build and install extension
-  `phpize && ./configure && make && sudo make install`
+  + `phpize && ./configure && make && sudo make install`
+  > **Note**: if you have PHP installed from sources you should use full paths: `[/path/to/php/]phpize && ./configure --with-php-config=[/path/to/php/]php-config && make && sudo make install` 
 + Make sure you have extension=intl_dtpg.so in your php.ini
+> **Note**: if you didn't install the extension via `make install` you have to use a full path: `extension=[/path/to/ext_src_dir/modules/]intl_dtpg.so`
 + Try it using example
   `php example.php`
 
