@@ -64,7 +64,6 @@ PHP_METHOD(IntlDateTimePatternGenerator, __construct)
     }
 
     object = getThis();
-
     dtpg = php_intl_datetimepatterngenerator_fetch_object(Z_OBJ_P(object));
 
     dtpg->status = U_ZERO_ERROR;
@@ -154,14 +153,6 @@ PHP_MINFO_FUNCTION(intl_dtpg)
     php_info_print_table_end();
 }
 /* }}} */
-
-PHP_FUNCTION(findBestPattern) {
-    zend_string *skeleton;
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "S", &skeleton) == FAILURE) {
-        return;
-    }
-}
 
 /* {{{ intl_dtpg_functions[]
  */
