@@ -1,5 +1,7 @@
 # IntlDateTimePatternGenerator
 
+[![Build Status](https://travis-ci.org/ksimka/intl_dtpg.svg?branch=master)](https://travis-ci.org/ksimka/intl_dtpg)
+
 This PHP extension introduces `IntlDateTimePatternGenerator` class — the missing part from PHP's `intl` extension.
 
 ## Motivation
